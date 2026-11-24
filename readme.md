@@ -16,7 +16,7 @@ npm install ps-list
 import psList from 'ps-list';
 
 console.log(await psList());
-//=> [{pid: 3213, name: 'node', cmd: 'node test.js', ppid: 1, uid: 501, cpu: 0.1, memory: 1.5, path: '/usr/local/bin/node', startTime: 2025-01-15T10:30:00.000Z}, …]
+//=> [{pid: 3213, name: 'node', cmd: 'node test.js', ppid: 1, uid: 501, cpu: 0.1, memory: 1.5, path: '/usr/local/bin/node', args: ['test.js'], startTime: 2025-01-15T10:30:00.000Z}, …]
 ```
 
 ## API
@@ -35,8 +35,9 @@ On macOS and Linux:
   - On macOS: extracted from command line when possible
   - Falls back to `comm` (which may be truncated)
 - The `startTime` property contains the process start time as a Date object
+- On Linux, the `args` property contains the process arguments after `argv[0]` as a string array, read from `/proc/{pid}/cmdline` with argument boundaries preserved. It is `undefined` when the arguments cannot be read or on unsupported platforms.
 
-The `cmd`, `cpu`, `memory`, `uid`, `path`, and `startTime` properties are not available on Windows.
+The `cmd`, `cpu`, `memory`, `uid`, `path`, `args`, and `startTime` properties are not available on Windows.
 
 #### options
 
