@@ -11,3 +11,6 @@ expectType<string | undefined>(processes[0].cmd);
 expectType<number | undefined>(processes[0].cpu);
 expectType<number | undefined>(processes[0].memory);
 expectType<number | undefined>(processes[0].uid);
+expectType<string | undefined>(processes[0].path);
+expectType<string[] | undefined>(processes[0].args);
+expectType<Date | undefined>(processes[0].startTime);
