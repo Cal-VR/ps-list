@@ -30,7 +30,8 @@ test('main', async t => {
 			&& typeof x.memory === 'number'
 			&& (typeof x.uid === 'number' || x.uid === undefined)
 			&& typeof x.path === 'string'
-			&& (x.startTime instanceof Date || x.startTime === undefined)));
+			&& (x.startTime instanceof Date || x.startTime === undefined)
+			&& (Array.isArray(x.args) || x.args === undefined)));
 
 		// Verify Date objects are valid (not Invalid Date)
 		for (const process_ of list) {
@@ -76,6 +77,12 @@ test('custom binary', async t => {
 			t.true(record.path.includes('node'), 'Resolved path should contain node');
 		}
 
+		if (process.platform === 'linux') {
+			t.deepEqual(record.args, arguments_);
+		} else {
+			t.is(record.args, undefined);
+		}
+
 		t.true(record.startTime instanceof Date);
 		t.true(record.startTime <= new Date());
 
@@ -83,6 +90,26 @@ test('custom binary', async t => {
 		if (record.startTime) {
 			t.false(Number.isNaN(record.startTime.getTime()), 'startTime should be valid Date');
 		}
+	}
+});
+
+test('process arguments retain their boundaries', async t => {
+	const arguments_ = ['./fixtures/sleep-forever.js', 'two words', '', '"quoted"', ''];
+	const child = childProcess.spawn(process.execPath, arguments_, {argv0: 'custom-process-name'});
+
+	try {
+		const list = await psList();
+		const record = list.find(entry => entry.pid === child.pid);
+		t.truthy(record, 'Should find the spawned process');
+
+		if (process.platform === 'linux') {
+			t.deepEqual(record.args, arguments_);
+		} else {
+			t.is(record.args, undefined);
+		}
+	} finally {
+		child.kill(9);
+		await once(child, 'exit');
 	}
 });
 
