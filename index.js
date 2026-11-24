@@ -96,6 +96,26 @@ const resolveExecutablePath = (operatingSystemPlatform, processId, commandLine) 
 	return extractExecutablePath(commandLine);
 };
 
+// The ps command flattens argv into a display string. procfs preserves argument boundaries.
+const resolveProcessArguments = (operatingSystemPlatform, processId) => {
+	if (operatingSystemPlatform !== 'linux' || !processId) {
+		return undefined;
+	}
+
+	try {
+		const commandLine = fs.readFileSync(`/proc/${processId}/cmdline`, 'utf8');
+		if (!commandLine.endsWith('\0')) {
+			return undefined;
+		}
+
+		// Remove only the terminator so an empty final argument survives.
+		return commandLine.slice(0, -1).split('\0').slice(1);
+	} catch {
+		// Processes may exit or be inaccessible between enumeration and the read.
+		return undefined;
+	}
+};
+
 // Parse and validate numeric field with fallback
 const parseNumericField = (fieldValue, parserFunction = Number.parseInt, defaultValue = 0) => {
 	if (!fieldValue) {
@@ -139,6 +159,7 @@ const parseProcessFields = ({processId, parentProcessId, userId, cpuUsage, memor
 		memory: parsedMemoryUsagePercentage,
 		name: derivedProcessName,
 		path: resolvedExecutablePath,
+		args: resolveProcessArguments(process.platform, parsedProcessId),
 		startTime: makeStartTime(startTimeString),
 		cmd: command || '',
 	};
